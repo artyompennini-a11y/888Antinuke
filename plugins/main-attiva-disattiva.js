@@ -33,7 +33,7 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
   }
 
   if (!isAdmin && !isOwner && !isROwner) {
-    return conn.sendMessage(m.chat, { text: '⚠️ *Azione negata:* Comando riservato agli amministratori.' }, { quoted: fake });
+    return conn.sendMessage(m.chat, { text: '⚠️ *Azione negata:* Comando riservato agli owner.' }, { quoted: fake });
   }
 
   let isEnable = /true|enable|attiva|(turn)?on|1/i.test(command);
@@ -42,7 +42,7 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
   global.db.data.chats[m.chat] = global.db.data.chats[m.chat] || {};
   let chat = global.db.data.chats[m.chat];
 
-  // Se viene inviato solo il comando senza argomenti o se l'argomento è "antinuke"
+ 
   if (!args.length || args[0].toLowerCase() === 'antinuke') {
     if (chat.antinuke === isEnable) {
       const statusText = isEnable ? 'risulta già attivo.' : 'risulta già disattivato.';
@@ -65,8 +65,8 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
   }
 };
 
-handler.help = ['attiva antinuke', 'disattiva antinuke'];
-handler.tags = ['admin'];
-handler.command = ['enable', 'disable', 'attiva', 'disattiva', 'on', 'off'];
+handler.help = ['888 antinuke', 'ds antinuke'];
+handler.tags = ['owner'];
+handler.command = ['enable', 'disable', 'attiva', '888', 'on', 'off'];
 
 export default handler;
