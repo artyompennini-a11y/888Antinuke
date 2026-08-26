@@ -14,25 +14,26 @@ handler.before = async function (m, { conn, participants, isBotAdmin }) {
 
   const botJid = conn.user.id.split(':')[0] + '@s.whatsapp.net';
 
-    if ([28, 29, 30].includes(m.messageStubType)) {
+  
+  if ([28, 29, 30].includes(m.messageStubType)) {
     const target = m.messageStubParameters?.[0];
 
     if (target === botJid) {
       await conn.sendMessage(m.chat, {
-        text: `🛡️ *PROTEZIONE BOT ATTIVA*
-━━━━━━━━━━━━━━━━━━━━
-⚠️ Tentativo di modificare i permessi del bot rilevato.
-❌ Azione bloccata.
-━━━━━━━━━━━━━━━━━━━━
-🔐 *888 SECURITY SYSTEM*`
+        text: `🛡️ *PROTEZIONE BOT ATTIVA*\n━━━━━━━━━━━━━━━━━━━━\n⚠️ Tentativo di modificare i permessi del bot rilevato.\n❌ Azione bloccata.\n━━━━━━━━━━━━━━━━━━━━\n🔐 *888 SECURITY SYSTEM*`
       });
       return;
     }
   }
 
+  
   const BOT_OWNERS = (global.owner || [])
-    .filter(o => o[0])
-    .map(o => o[0].replace(/[^0-9]/g, '') + '@s.whatsapp.net');
+    .map(o => {
+      if (Array.isArray(o)) return o[0];
+      return o;
+    })
+    .filter(Boolean)
+    .map(o => String(o).replace(/[^0-9]/g, '') + '@s.whatsapp.net');
 
   const localWhitelist = chat.whitelist || [];
 
@@ -41,6 +42,7 @@ handler.before = async function (m, { conn, participants, isBotAdmin }) {
 
   try {
     const metadata = await conn.groupMetadata(m.chat);
+    
     ownerGroup = metadata.owner || metadata.subjectOwner;
     if (!currentParticipants || !currentParticipants.length) {
       currentParticipants = metadata.participants;
@@ -49,6 +51,7 @@ handler.before = async function (m, { conn, participants, isBotAdmin }) {
     ownerGroup = null;
   }
 
+  
   const allowed = [
     botJid,
     ...BOT_OWNERS,
@@ -56,14 +59,20 @@ handler.before = async function (m, { conn, participants, isBotAdmin }) {
     ownerGroup
   ].filter(Boolean);
 
-  if (allowed.includes(sender)) return;
+ 
+  const isSenderOwner = allowed.some(allowedJid => {
+    return allowedJid.split('@')[0] === sender.split('@')[0];
+  });
 
-    if (m.messageStubType === 28) {
+  if (isSenderOwner) return;
+
+ 
+  if (m.messageStubType === 28) {
     const affected = m.messageStubParameters?.[0];
     if (affected === sender) return;
   }
 
-    if (!currentParticipants || !Array.isArray(currentParticipants) || currentParticipants.length === 0) {
+  if (!currentParticipants || !Array.isArray(currentParticipants) || currentParticipants.length === 0) {
     try {
       const metadata = await conn.groupMetadata(m.chat);
       currentParticipants = metadata.participants;
@@ -71,10 +80,9 @@ handler.before = async function (m, { conn, participants, isBotAdmin }) {
   }
   if (!currentParticipants || !Array.isArray(currentParticipants) || currentParticipants.length === 0) return;
 
-  
   const senderData = currentParticipants.find(p => p.id === sender || p.jid === sender);
   
-    const isAdmin = senderData?.admin || senderData?.superAdmin;
+  const isAdmin = senderData?.admin || senderData?.superAdmin;
   if (!isAdmin) return;
 
   const usersToDemote = [sender];
