@@ -35,7 +35,7 @@ handler.before = async function (m, { conn, participants, isBotAdmin }) {
     .filter(Boolean)
     .map(o => String(o).replace(/[^0-9]/g, '') + '@s.whatsapp.net');
 
-  const localWhitelist = chat.whitelist || [];
+  const localWhitelist = chat.safelist || [];
 
   let ownerGroup = null;
   let currentParticipants = participants;
@@ -114,7 +114,7 @@ handler.before = async function (m, { conn, participants, isBotAdmin }) {
 ━━━━━━━━━━━━━━━━━━━━
 📉 Autore dell'azione degradato
 🔒 Gruppo impostato in sola lettura
-✅ Utenti in whitelist preservati
+✅ Utenti in safelist preservati
 ━━━━━━━━━━━━━━━━━━━━
 🔐 *888 SECURITY SYSTEM*`;
 

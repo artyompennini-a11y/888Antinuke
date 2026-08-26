@@ -1,5 +1,3 @@
-// Plugin AntiNuke by Elixir & 888 staff
-
 import fs from 'fs';
 
 let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isROwner }) => {
@@ -36,13 +34,11 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
     return conn.sendMessage(m.chat, { text: '⚠️ *Azione negata:* Comando riservato agli owner.' }, { quoted: fake });
   }
 
-  // Determina se l'azione è di attivazione (888, enable, attiva, on, 1) o disattivazione (444, disable, disattiva, off, 0)
   const isEnable = /^(888|enable|attiva|on|1)$/i.test(command);
 
   global.db.data.chats[m.chat] = global.db.data.chats[m.chat] || {};
   let chat = global.db.data.chats[m.chat];
 
-  // Verifica che venga specificato 'antinuke' dopo il comando
   if (args[0] && args[0].toLowerCase() === 'antinuke') {
     if (chat.antinuke === isEnable) {
       const statusText = isEnable ? 'risulta già attivo.' : 'risulta già disattivato.';

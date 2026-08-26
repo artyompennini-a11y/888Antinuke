@@ -1,17 +1,16 @@
 let handler = async (m, { conn, text, command, usedPrefix, args }) => {
 
-    // 1. Inizializzazione sicura del database
     global.db.data.chats = global.db.data.chats || {}
     global.db.data.chats[m.chat] = global.db.data.chats[m.chat] || {}
-    if (!Array.isArray(global.db.data.chats[m.chat].safelist)) {
-        global.db.data.chats[m.chat].whitelist = []
+    const chat = global.db.data.chats[m.chat]
+
+    if (!Array.isArray(chat.safelist)) {
+        chat.safelist = (Array.isArray(chat.whitelist) && chat.whitelist.length) ? chat.whitelist : []
     }
 
-    let chat = global.db.data.chats[m.chat]
     const cmd = command.toLowerCase()
     const subCmd = args[0] ? args[0].toLowerCase() : ''
 
-    // 2. VISUALIZZAZIONE LISTA (.safelist o .safelist list)
     if (cmd === 'safelist' && (!args.length || subCmd === 'list')) {
         if (!chat.safelist.length) {
             return m.reply(
@@ -32,13 +31,12 @@ let handler = async (m, { conn, text, command, usedPrefix, args }) => {
                       `${list}\n` +
                       `╰━━━━━━━━━━━━━━━━━━┈`
 
-        return conn.sendMessage(m.chat, { 
-            text: caption, 
+        return conn.sendMessage(m.chat, {
+            text: caption,
             mentions: chat.safelist
         }, { quoted: m })
     }
 
-    // 3. IDENTIFICAZIONE AZIONE E TARGET
     let action = null
     let targetInput = ''
 
@@ -50,7 +48,6 @@ let handler = async (m, { conn, text, command, usedPrefix, args }) => {
         targetInput = cmd === 'safelist' ? args.slice(1).join(' ') : text
     }
 
-    // Estrazione JID target (da menzione, reply o testo/numero)
     let who = false
     if (m.mentionedJid && m.mentionedJid[0]) {
         who = m.mentionedJid[0]
@@ -63,7 +60,6 @@ let handler = async (m, { conn, text, command, usedPrefix, args }) => {
         }
     }
 
-    // 4. GUIDA SULL'USO (se manca l'azione o il target)
     if (!action || !who) {
         return m.reply(
             `⚠️ *Uso corretto dei comandi Safelist:*\n\n` +
@@ -73,7 +69,6 @@ let handler = async (m, { conn, text, command, usedPrefix, args }) => {
         )
     }
 
-    // 5. ESECUZIONE AGGIUNTA
     if (action === 'add') {
         if (chat.safelist.includes(who)) {
             return m.reply('✨ _L\'utente è già presente nella safelist di questo gruppo._')
@@ -93,7 +88,6 @@ let handler = async (m, { conn, text, command, usedPrefix, args }) => {
         }, { quoted: m })
     }
 
-    // 6. ESECUZIONE RIMOZIONE
     if (action === 'remove') {
         if (!chat.safelist.includes(who)) {
             return m.reply('❌ _L\'utente non è presente nella safelist di questo gruppo._')
@@ -118,7 +112,7 @@ handler.help = ['safelist', 'addsafelist', 'delsafelist']
 handler.tags = ['owner', 'group']
 handler.command = /^(safelist|addsafelist|delsafelist)$/i
 
-handler.owner = true    // Esecuzione riservata agli Owner del Bot
-handler.group = true    // Esecuzione riservata ai gruppi
+handler.owner = true
+handler.group = true
 
 export default handler
