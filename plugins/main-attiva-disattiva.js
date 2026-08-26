@@ -67,6 +67,6 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
 
 handler.help = ['888 antinuke', 'ds antinuke'];
 handler.tags = ['owner'];
-handler.command = ['enable', 'disable', 'attiva', '888', 'on', 'off'];
+handler.command = ['enable', 'disable', '888', 'ds', 'on', 'off'];
 
 export default handler;
