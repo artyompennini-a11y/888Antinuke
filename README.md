@@ -93,7 +93,7 @@ pkg install git nodejs ffmpeg imagemagick yarn -y
 # Download del bot
 cd ~
 git clone https://github.com/TUO-USERNAME/888Antinuke.git
-cd 888-BOT
+cd 888Antinuke
 
 # Installazione e avvio
 yarn install
