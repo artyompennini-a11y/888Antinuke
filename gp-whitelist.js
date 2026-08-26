@@ -3,7 +3,7 @@ let handler = async (m, { conn, text, command, usedPrefix, args }) => {
     // 1. Inizializzazione sicura del database
     global.db.data.chats = global.db.data.chats || {}
     global.db.data.chats[m.chat] = global.db.data.chats[m.chat] || {}
-    if (!Array.isArray(global.db.data.chats[m.chat].whitelist)) {
+    if (!Array.isArray(global.db.data.chats[m.chat].safelist)) {
         global.db.data.chats[m.chat].whitelist = []
     }
 
@@ -13,7 +13,7 @@ let handler = async (m, { conn, text, command, usedPrefix, args }) => {
 
     // 2. VISUALIZZAZIONE LISTA (.safelist o .safelist list)
     if (cmd === 'safelist' && (!args.length || subCmd === 'list')) {
-        if (!chat.whitelist.length) {
+        if (!chat.safelist.length) {
             return m.reply(
                 `╭━━━〔 📑 *SAFELIST GRUPPO* 〕━━━┈\n` +
                 `┃ *Bot:* 𝟴𝟴𝟴 𝗕𝗢𝗧\n` +
@@ -24,7 +24,7 @@ let handler = async (m, { conn, text, command, usedPrefix, args }) => {
             )
         }
 
-        let list = chat.whitelist.map(jid => `┃ ⮕ @${jid.split('@')[0]}`).join('\n')
+        let list = chat.safelist.map(jid => `┃ ⮕ @${jid.split('@')[0]}`).join('\n')
         let caption = `╭━━━〔 📑 *SAFELIST GRUPPO* 〕━━━┈\n` +
                       `┃ *Bot:* 𝟴𝟴𝟴 𝗕𝗢𝗧\n` +
                       `┃ *Stato:* Utenti Autorizzati\n` +
@@ -34,7 +34,7 @@ let handler = async (m, { conn, text, command, usedPrefix, args }) => {
 
         return conn.sendMessage(m.chat, { 
             text: caption, 
-            mentions: chat.whitelist 
+            mentions: chat.safelist
         }, { quoted: m })
     }
 
@@ -75,11 +75,11 @@ let handler = async (m, { conn, text, command, usedPrefix, args }) => {
 
     // 5. ESECUZIONE AGGIUNTA
     if (action === 'add') {
-        if (chat.whitelist.includes(who)) {
+        if (chat.safelist.includes(who)) {
             return m.reply('✨ _L\'utente è già presente nella safelist di questo gruppo._')
         }
 
-        chat.whitelist.push(who)
+        chat.safelist.push(who)
         await global.db.write()
 
         return conn.sendMessage(m.chat, {
@@ -95,11 +95,11 @@ let handler = async (m, { conn, text, command, usedPrefix, args }) => {
 
     // 6. ESECUZIONE RIMOZIONE
     if (action === 'remove') {
-        if (!chat.whitelist.includes(who)) {
+        if (!chat.safelist.includes(who)) {
             return m.reply('❌ _L\'utente non è presente nella safelist di questo gruppo._')
         }
 
-        chat.whitelist = chat.whitelist.filter(jid => jid !== who)
+        chat.safelist = chat.safelist.filter(jid => jid !== who)
         await global.db.write()
 
         return conn.sendMessage(m.chat, {
