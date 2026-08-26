@@ -1,67 +1,79 @@
 let handler = async (m, { conn, text, command, usedPrefix, args }) => {
 
-    // Inizializzazione database chat
-    if (!global.db.data.chats[m.chat]) global.db.data.chats[m.chat] = {}
-    if (!global.db.data.chats[m.chat].whitelist) global.db.data.chats[m.chat].whitelist = []
+    // 1. Inizializzazione sicura del database
+    global.db.data.chats = global.db.data.chats || {}
+    global.db.data.chats[m.chat] = global.db.data.chats[m.chat] || {}
+    if (!Array.isArray(global.db.data.chats[m.chat].whitelist)) {
+        global.db.data.chats[m.chat].whitelist = []
+    }
 
     let chat = global.db.data.chats[m.chat]
-    let who = false
-    let action = null
-
     const cmd = command.toLowerCase()
+    const subCmd = args[0] ? args[0].toLowerCase() : ''
 
-    // 1. VISUALIZZAZIONE LISTA (.safelist oppure .safelist list)
-    if (cmd === 'safelist' && (!args.length || args[0].toLowerCase() === 'list')) {
-        let list = chat.whitelist.map(jid => `┃  ⮕ @${jid.split('@')[0]}`).join('\n')
-        let caption = `╭━━━〔 📑 *SAFELIST GRUPPO* 〕━━━┈
-┃ *Bot:* 𝟴𝟴𝟴 𝗕𝗢𝗧
-┃ *Stato:* Utenti Autorizzati
-┃━━━━━━━━━━━━━━━━━━
-${list ? list : '┃  ⚠️ _Nessun utente autorizzato in questo gruppo._'}
-╰━━━━━━━━━━━━━━━━━━┈`.trim()
-        return m.reply(caption, null, { mentions: conn.parseMention(list) })
+    // 2. VISUALIZZAZIONE LISTA (.safelist o .safelist list)
+    if (cmd === 'safelist' && (!args.length || subCmd === 'list')) {
+        if (!chat.whitelist.length) {
+            return m.reply(
+                `╭━━━〔 📑 *SAFELIST GRUPPO* 〕━━━┈\n` +
+                `┃ *Bot:* 𝟴𝟴𝟴 𝗕𝗢𝗧\n` +
+                `┃ *Stato:* Utenti Autorizzati\n` +
+                `┃━━━━━━━━━━━━━━━━━━\n` +
+                `┃ ⚠️ _Nessun utente autorizzato in questo gruppo._\n` +
+                `╰━━━━━━━━━━━━━━━━━━┈`
+            )
+        }
+
+        let list = chat.whitelist.map(jid => `┃ ⮕ @${jid.split('@')[0]}`).join('\n')
+        let caption = `╭━━━〔 📑 *SAFELIST GRUPPO* 〕━━━┈\n` +
+                      `┃ *Bot:* 𝟴𝟴𝟴 𝗕𝗢𝗧\n` +
+                      `┃ *Stato:* Utenti Autorizzati\n` +
+                      `┃━━━━━━━━━━━━━━━━━━\n` +
+                      `${list}\n` +
+                      `╰━━━━━━━━━━━━━━━━━━┈`
+
+        return conn.sendMessage(m.chat, { 
+            text: caption, 
+            mentions: chat.whitelist 
+        }, { quoted: m })
     }
 
-    // 2. DETERMINAZIONE AZIONE (ADD / REMOVE)
-    if (cmd === 'addsafelist' || (cmd === 'safelist' && args[0]?.toLowerCase() === 'add')) {
+    // 3. IDENTIFICAZIONE AZIONE E TARGET
+    let action = null
+    let targetInput = ''
+
+    if (cmd === 'addsafelist' || (cmd === 'safelist' && subCmd === 'add')) {
         action = 'add'
-    } else if (cmd === 'delsafelist' || (cmd === 'safelist' && (args[0]?.toLowerCase() === 'remove' || args[0]?.toLowerCase() === 'del'))) {
+        targetInput = cmd === 'safelist' ? args.slice(1).join(' ') : text
+    } else if (cmd === 'delsafelist' || (cmd === 'safelist' && (subCmd === 'remove' || subCmd === 'del'))) {
         action = 'remove'
+        targetInput = cmd === 'safelist' ? args.slice(1).join(' ') : text
     }
 
-    // 3. ESTRAZIONE TARGET (Chi deve essere aggiunto/rimosso)
-    if (cmd === 'safelist' && (args[0]?.toLowerCase() === 'add' || args[0]?.toLowerCase() === 'remove' || args[0]?.toLowerCase() === 'del')) {
-        let targetText = args.slice(1).join(' ')
+    // Estrazione JID target (da menzione, reply o testo/numero)
+    let who = false
+    if (m.mentionedJid && m.mentionedJid[0]) {
         who = m.mentionedJid[0]
-            ? m.mentionedJid[0]
-            : m.quoted
-                ? m.quoted.sender
-                : targetText
-                    ? targetText.replace(/[^0-9]/g, '') + '@s.whatsapp.net'
-                    : false
-    } else {
-        who = m.mentionedJid[0]
-            ? m.mentionedJid[0]
-            : m.quoted
-                ? m.quoted.sender
-                : text
-                    ? text.replace(/[^0-9]/g, '') + '@s.whatsapp.net'
-                    : false
+    } else if (m.quoted && m.quoted.sender) {
+        who = m.quoted.sender
+    } else if (targetInput) {
+        let cleaned = targetInput.replace(/[^0-9]/g, '')
+        if (cleaned.length >= 7) {
+            who = cleaned + '@s.whatsapp.net'
+        }
     }
 
-    // Validazione target
-    if (!action || !who || who === '@s.whatsapp.net') {
+    // 4. GUIDA SULL'USO (se manca l'azione o il target)
+    if (!action || !who) {
         return m.reply(
-            `⚠️ *Uso corretto:*\n` +
-            `• _${usedPrefix}safelist_ (mostra lista)\n` +
-            `• _${usedPrefix}safelist add @tag_\n` +
-            `• _${usedPrefix}safelist remove @tag_\n` +
-            `• _${usedPrefix}addsafelist @tag_\n` +
-            `• _${usedPrefix}delsafelist @tag_`
+            `⚠️ *Uso corretto dei comandi Safelist:*\n\n` +
+            `📌 *Visualizzare lista:* _${usedPrefix}safelist_\n` +
+            `➕ *Aggiungere utente:* _${usedPrefix}safelist add @tag_ oppure _${usedPrefix}addsafelist @tag_\n` +
+            `➖ *Rimuovere utente:* _${usedPrefix}safelist remove @tag_ oppure _${usedPrefix}delsafelist @tag_`
         )
     }
 
-    // 4. ESECUZIONE AGGIUNTA
+    // 5. ESECUZIONE AGGIUNTA
     if (action === 'add') {
         if (chat.whitelist.includes(who)) {
             return m.reply('✨ _L\'utente è già presente nella safelist di questo gruppo._')
@@ -71,17 +83,17 @@ ${list ? list : '┃  ⚠️ _Nessun utente autorizzato in questo gruppo._'}
         await global.db.write()
 
         return conn.sendMessage(m.chat, {
-            text: `╭━━━〔 ✅ *UTENTE AUTORIZZATO* 〕━━━┈
-┃ 👤 *Utente:* @${who.split('@')[0]}
-┃ 🏰 *Ambito:* Questo Gruppo
-┃━━━━━━━━━━━━━━━━━━
-┃ ⮕ _L'utente è ora esente dai controlli Antinuke._
-╰━━━━━━━━━━━━━━━━━━┈`,
-            contextInfo: { mentionedJid: [who] }
+            text: `╭━━━〔 ✅ *UTENTE AUTORIZZATO* 〕━━━┈\n` +
+                  `┃ 👤 *Utente:* @${who.split('@')[0]}\n` +
+                  `┃ 🏰 *Ambito:* Questo Gruppo\n` +
+                  `┃━━━━━━━━━━━━━━━━━━\n` +
+                  `┃ ⮕ _L'utente è ora esente dai controlli Antinuke._\n` +
+                  `╰━━━━━━━━━━━━━━━━━━┈`,
+            mentions: [who]
         }, { quoted: m })
     }
 
-    // 5. ESECUZIONE RIMOZIONE
+    // 6. ESECUZIONE RIMOZIONE
     if (action === 'remove') {
         if (!chat.whitelist.includes(who)) {
             return m.reply('❌ _L\'utente non è presente nella safelist di questo gruppo._')
@@ -91,22 +103,22 @@ ${list ? list : '┃  ⚠️ _Nessun utente autorizzato in questo gruppo._'}
         await global.db.write()
 
         return conn.sendMessage(m.chat, {
-            text: `╭━━━〔 🗑️ *UTENTE RIMOSSO* 〕━━━┈
-┃ 👤 *Utente:* @${who.split('@')[0]}
-┃ 🏰 *Ambito:* Questo Gruppo
-┃━━━━━━━━━━━━━━━━━━
-┃ ⮕ _L'utente è stato rimosso dalla safelist locale._
-╰━━━━━━━━━━━━━━━━━━┈`,
-            contextInfo: { mentionedJid: [who] }
+            text: `╭━━━〔 🗑️ *UTENTE RIMOSSO* 〕━━━┈\n` +
+                  `┃ 👤 *Utente:* @${who.split('@')[0]}\n` +
+                  `┃ 🏰 *Ambito:* Questo Gruppo\n` +
+                  `┃━━━━━━━━━━━━━━━━━━\n` +
+                  `┃ ⮕ _L'utente è stato rimosso dalla safelist locale._\n` +
+                  `╰━━━━━━━━━━━━━━━━━━┈`,
+            mentions: [who]
         }, { quoted: m })
     }
 }
 
 handler.help = ['safelist', 'addsafelist', 'delsafelist']
 handler.tags = ['owner', 'group']
-handler.command = ['safelist', 'addsafelist', 'delsafelist']
+handler.command = /^(safelist|addsafelist|delsafelist)$/i
 
-handler.owner = true   // Solo Owner del Bot
-handler.group = true   // Solo nei gruppi
+handler.owner = true    // Esecuzione riservata agli Owner del Bot
+handler.group = true    // Esecuzione riservata ai gruppi
 
 export default handler
