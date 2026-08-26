@@ -36,14 +36,14 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
     return conn.sendMessage(m.chat, { text: '⚠️ *Azione negata:* Comando riservato agli owner.' }, { quoted: fake });
   }
 
-  let isEnable = /true|enable|attiva|(turn)?on|1/i.test(command);
-  if (/disable|disattiva|off|0/i.test(command)) isEnable = false;
+  // Determina se l'azione è di attivazione (888, enable, attiva, on, 1) o disattivazione (444, disable, disattiva, off, 0)
+  const isEnable = /^(888|enable|attiva|on|1)$/i.test(command);
 
   global.db.data.chats[m.chat] = global.db.data.chats[m.chat] || {};
   let chat = global.db.data.chats[m.chat];
 
- 
-  if (!args.length || args[0].toLowerCase() === 'antinuke') {
+  // Verifica che venga specificato 'antinuke' dopo il comando
+  if (args[0] && args[0].toLowerCase() === 'antinuke') {
     if (chat.antinuke === isEnable) {
       const statusText = isEnable ? 'risulta già attivo.' : 'risulta già disattivato.';
       return conn.sendMessage(m.chat, { text: `🟨 *AntiNuke* ${statusText}` }, { quoted: fake });
@@ -61,12 +61,12 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
 
     return conn.sendMessage(m.chat, { text: msg }, { quoted: fake });
   } else {
-    return conn.sendMessage(m.chat, { text: `⚠️ Modulo non riconosciuto. Usa *${usedPrefix}${command} antinuke*` }, { quoted: fake });
+    return conn.sendMessage(m.chat, { text: `⚠️ Usa *${usedPrefix}888 antinuke* per attivare o *${usedPrefix}444 antinuke* per disattivare.` }, { quoted: fake });
   }
 };
 
-handler.help = ['888 antinuke', 'ds antinuke'];
+handler.help = ['888 antinuke', '444 antinuke'];
 handler.tags = ['owner'];
-handler.command = ['enable', 'disable', '888', 'ds', 'on', 'off'];
+handler.command = ['888', '444'];
 
 export default handler;
