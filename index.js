@@ -229,7 +229,7 @@ async function epicStartup() {
 
   console.clear();
   console.log('\n\n');
-  await typeWriterBig('888\nBOT\nV1.1', 100);
+  await typeWriterBig('888\nANTINUKE\nV1.1', 100);
   await sleep(300);
 
   console.log('\n');
